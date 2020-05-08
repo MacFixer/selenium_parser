@@ -4,10 +4,14 @@ import random
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
-# from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from base64 import b64decode
+from PIL import Image
+import pytesseract
+from io import BytesIO
+
 
 class AvitoParser:
 
@@ -19,11 +23,12 @@ class AvitoParser:
 
         try:
             elems = driver.find_elements_by_class_name("item__line")
-            # elems = driver.find_elements_by_class_name("item_table-wrapper")
-
             wait = WebDriverWait(driver, 60)
 
-            for elem in elems:
+            for key, elem in enumerate(elems):
+
+                if key == 4:
+                    break
 
                 title_elem = elem.find_element_by_class_name("snippet-title")
                 title_text = title_elem.text
@@ -31,9 +36,9 @@ class AvitoParser:
                 price_str = elem.find_element_by_class_name("snippet-price-row").text
                 district = elem.find_element_by_class_name("item-address-georeferences-item__content").text
                 hover.perform()
-                phone_button = elem.find_element_by_class_name("js-item-extended-contacts").click()
+                phone_button = elem.find_element_by_class_name("js-item-extended-contacts.button-origin").click()
 
-                rand_sleep = random.randint(15, 27)
+                rand_sleep = random.randint(12, 19)
                 print(rand_sleep/10)
                 time.sleep(rand_sleep/10)
 
@@ -50,6 +55,17 @@ class AvitoParser:
                 print(price_str, end="\n")
                 # time.sleep(1)
 
+            phone_pictures = driver.find_elements_by_class_name("item-extended-phone")
+            for pict in phone_pictures:
+                phone_pict = pict.get_attribute('src')
+                data = b64decode(phone_pict.split('base64,')[-1].strip())
+                temp_buff = BytesIO()
+                temp_buff.write(data)
+                temp_buff.seek(0)
+                image = Image.open(temp_buff)
+
+                print(pytesseract.image_to_string(image))
+
             # hover = ActionChains(driver).move_to_element(elem)
             # hover.perform()
             # elem.send_keys("pycon")
@@ -62,3 +78,5 @@ class AvitoParser:
 if __name__ == "__main__":
     driver = AvitoParser()
     driver.setUp()
+
+
